@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="${class}">
+
+<resultMap id="${csnlc}Result" type="${cn}">
+#foreach($getter in $getters)
+    <result column="${m_getters.get($getter)}" property="${getter}"/>
+#end
+</resultMap>
+
+<sql id="${csnlc}_columns">
+#foreach($getter in $getters)
+#set($ctemp = "${m_getters.get($getter)}")
+#if($velocityCount != ($getters.size() ))
+#set($ctemp = "${ctemp},")
+#end
+    $ctemp
+#end
+</sql>
+
+<sql id="${csnlc}_sqlForInsert">
+#foreach($getter in $getters)
+#set($ctemp = "${m_getters.get($getter)}")
+#if($velocityCount != ($getters.size() ))
+#set($ctemp = "${ctemp},")
+#end
+    $ctemp
+#end
+</sql>
+
+<sql id="${csnlc}_columnsForInsert">
+#foreach($getter in $getters)
+#set($ctemp = "#{${getter}}")
+#if(${getter} == "gmtModified")
+    #set($ctemp = "now()")
+#elseif($getter == "gmtCreate")
+    #set($ctemp = "now()")
+#elseif($getter == "gmtCreated")
+    #set($ctemp = "now()")
+#end
+#if($velocityCount != ($getters.size() ))
+    #set($ctemp = "${ctemp},")
+#end
+    $ctemp
+#end
+</sql>
+
+<sql id="${csnlc}_setterForUpdate">
+    <set>
+        gmt_modified = now(),
+#foreach($getter in $getters)
+#if(${getter} != "gmtModified" && ${getter} != "gmtCreate"  && ${getter} != "gmtCreated" && ${getter} != "id")
+        <if test="${getter} != null">
+            ${m_getters.get($getter)} = #{${getter}},
+        </if>
+#end
+#end
+    </set>
+</sql>
+
+<sql id="${csnlc}_selector">
+    select
+    <include refid="${csnlc}_columns"/>
+    from ${tn}
+</sql>
+
+<sql id="${csnlc}_query_segment">
+    <trim prefix="WHERE" prefixOverrides="AND|OR">
+#foreach($getter in $getters)
+        <if test="data.${getter} != null">
+            AND ${m_getters.get($getter)} = #{data.${getter}}
+        </if>
+#end
+#set($D='$')
+        <if test="ins != null">
+            AND
+            <foreach collection="ins" item="item" open="(" separator="and" close=")">
+                ${item.column} in
+                <foreach collection="item.values" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </foreach>
+        </if>
+        <if test="notIns != null">
+            AND
+            <foreach collection="notIns" item="item" open="(" separator="and" close=")">
+                ${item.column} not in
+                <foreach collection="item.values" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </foreach>
+        </if>
+        <if test="equals != null and equals != ''">
+            AND
+            <foreach collection="equals" item="item" open="(" separator="and" close=")">
+                ${item.column} = #{item.value}
+            </foreach>
+        </if>
+        <if test="notEquals != null and notEquals != ''">
+            AND
+            <foreach collection="notEquals" item="item" open="(" separator="and" close=")">
+                ${item.column} = #{item.value}
+            </foreach>
+        </if>
+        <if test="lts != null">
+            AND
+            <foreach collection="lts" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ < ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="gts != null">
+            AND
+            <foreach collection="gts" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ > ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="likes != null and likes != ''">
+            AND
+            <foreach collection="likes" item="item" open="(" separator="and" close=")">
+                ${item.column} like concat('%', #{item.value}, '%')
+            </foreach>
+        </if>
+        <if test="ltes != null">
+            AND
+            <foreach collection="ltes" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ <= ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="gtes != null">
+            AND
+            <foreach collection="gtes" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ >= ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="ranges != null">
+            AND
+            <foreach collection="ranges" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ >= ]]> #{item.from} and ${item.column} <![CDATA[ < ]]> #{item.to}
+            </foreach>
+        </if>
+#if(${deleteModel} == "logistical")
+        AND is_delete = 0
+#end
+    </trim>
+</sql>
+
+
+<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="${cn}">
+    insert into ${tn}
+    (
+        <include refid="${csnlc}_sqlForInsert"/>
+#if(${deleteModel} == "logistical")
+        ,is_delete
+#end
+    )
+    values
+    (
+        <include refid="${csnlc}_columnsForInsert"/>
+#if(${deleteModel} == "logistical")
+        ,0
+#end
+    )
+</insert>
+
+<update id="update" parameterType="${cn}">
+    update ${tn}
+    <include refid="${csnlc}_setterForUpdate" />
+    where id = #{id}
+#if(${deleteModel} == "logistical")
+    and is_delete = 0
+#end
+</update>
+
+
+<update id="updateByQuery" parameterType="${cn}">
+    update ${tn}
+    <set>
+        gmt_modified = now(),
+#foreach($getter in $getters)
+#if(${getter} != "gmtModified" && ${getter} != "gmtCreate"  && ${getter} != "gmtCreated" && ${getter} != "id")
+        <if test="update.${getter} != null">
+            ${m_getters.get($getter)} = #{update.${getter}},
+        </if>
+#end
+#end
+    </set>
+    <include refid="${csnlc}_query_segment"/>
+</update>
+
+
+<insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id" parameterType="${cn}">
+    insert into ${tn}
+    (
+        <include refid="${csnlc}_sqlForInsert"/>
+#if(${deleteModel} == "logistical")
+        ,is_delete
+#end
+    )
+    values
+    (
+        <include refid="${csnlc}_columnsForInsert"/>
+#if(${deleteModel} == "logistical")
+        ,0
+#end
+    )
+    on duplicate key update
+    gmt_modified = now()
+#if(${deleteModel} == "logistical")
+    ,is_delete = 0
+#end
+#foreach($getter in $getters)
+#if(${getter} != "gmtModified" && ${getter} != "gmtCreate"  && ${getter} != "gmtCreated" && ${getter} != "id")
+    <if test="${getter} != null">
+        ,${m_getters.get($getter)} = #{${getter}}
+    </if>
+#end
+#end
+</insert>
+
+<!-- Delete -->
+#if(${deleteModel} == "logistical")
+<update id="delete">
+    update ${tn}
+    set is_delete = 1, gmt_modified = now()
+    <include refid="${csnlc}_query_segment"/>
+</update>
+<update id="deleteById">
+    update ${tn}
+    set is_delete = 1, gmt_modified = now()
+    where id = #{id}
+</update>
+#else
+<delete id="delete">
+    delete from ${tn}
+    <include refid="${csnlc}_query_segment"/>
+</delete>
+<delete id="deleteById">
+    delete from ${tn}
+    where id = #{id}
+</delete>
+#end
+
+
+
+
+
+<!-- query class -->
+<sql id="${csnlc}_groupBy">
+    <if test="groupBys != null and groupBys != ''">
+        group by
+        <foreach collection="groupBys" item="item" open="" separator="," close="">
+            #{item}
+        </foreach>
+    </if>
+</sql>
+
+<sql id="${csnlc}_orderby">
+    <if test="orderBys != null and orderBys != ''">
+        order by
+        <foreach collection="orderBys" item="item" open="" separator="," close="">
+            ${item.column} ${item.direction}
+        </foreach>
+    </if>
+</sql>
+
+
+<select id="query" resultMap="${csnlc}Result" parameterType="${cn}">
+    <include refid="${csnlc}_selector"/>
+    <include refid="${csnlc}_query_segment"/>
+    <include refid="${csnlc}_groupBy"/>
+    <include refid="${csnlc}_orderby"/>
+</select>
+
+<select id="query4Page" resultMap="${csnlc}Result" parameterType="${cn}">
+    <include refid="${csnlc}_selector"/>
+    <include refid="${csnlc}_query_segment"/>
+    <include refid="${csnlc}_groupBy"/>
+    <include refid="${csnlc}_orderby"/>
+    limit ${startRowForMysql}, ${pageSize}
+</select>
+
+
+<select id="count" resultType="java.lang.Long">
+    SELECT COUNT(1) FROM ${tn}
+    <include refid="${csnlc}_query_segment"/>
+</select>
+
+<select id="getById" resultMap="${csnlc}Result">
+    <include refid="${csnlc}_selector"/>
+    where id = #{id}
+#if(${deleteModel} == "logistical")
+    and is_delete = 0
+#end
+</select>
+
+<select id="getByIdForUpdate" resultMap="${csnlc}Result">
+    <include refid="${csnlc}_selector"/>
+    where id = #{id}
+#if(${deleteModel} == "logistical")
+    and is_delete = 0
+#end
+    for update
+</select>
+
+</mapper>

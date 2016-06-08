@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sfebiz.common.dao.test.dao.DemoDeleteDao">
+
+<resultMap id="demoDeleteDOResult" type="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    <result column="name" property="name"/>
+    <result column="id" property="id"/>
+    <result column="gmt_create" property="gmtCreate"/>
+    <result column="gmt_modified" property="gmtModified"/>
+</resultMap>
+
+<sql id="demoDeleteDO_columns">
+    name,
+    id,
+    gmt_create,
+    gmt_modified
+</sql>
+
+<sql id="demoDeleteDO_sqlForInsert">
+    name,
+    id,
+    gmt_create,
+    gmt_modified
+</sql>
+
+<sql id="demoDeleteDO_columnsForInsert">
+    #{name},
+    #{id},
+    now(),
+    now()
+</sql>
+
+<sql id="demoDeleteDO_setterForUpdate">
+    <set>
+        gmt_modified = now(),
+        <if test="name != null">
+            name = #{name},
+        </if>
+    </set>
+</sql>
+
+<sql id="demoDeleteDO_selector">
+    select
+    <include refid="demoDeleteDO_columns"/>
+    from common_dao_demo_delete
+</sql>
+
+<sql id="demoDeleteDO_query_segment">
+    <trim prefix="WHERE" prefixOverrides="AND|OR">
+        <if test="data.name != null">
+            AND name = #{data.name}
+        </if>
+        <if test="data.id != null">
+            AND id = #{data.id}
+        </if>
+        <if test="data.gmtCreate != null">
+            AND gmt_create = #{data.gmtCreate}
+        </if>
+        <if test="data.gmtModified != null">
+            AND gmt_modified = #{data.gmtModified}
+        </if>
+        <if test="ins != null and ins != ''">
+            AND
+            <foreach collection="ins" item="item" open="(" separator="and" close=")">
+                ${item.column} in
+                <foreach collection="item.values" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </foreach>
+        </if>
+        <if test="notIns != null and notIns != ''">
+            AND
+            <foreach collection="notIns" item="item" open="(" separator="and" close=")">
+                ${item.column} not in
+                <foreach collection="item.values" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </foreach>
+        </if>
+        <if test="equals != null and equals != ''">
+            AND
+            <foreach collection="equals" item="item" open="(" separator="and" close=")">
+                ${item.column} = #{item.value}
+            </foreach>
+        </if>
+        <if test="notEquals != null and notEquals != ''">
+            AND
+            <foreach collection="notEquals" item="item" open="(" separator="and" close=")">
+                ${item.column} = #{item.value}
+            </foreach>
+        </if>
+        <if test="lts != null and lts != ''">
+            AND
+            <foreach collection="lts" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ < ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="gts != null and gts != ''">
+            AND
+            <foreach collection="gts" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ > ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="likes != null and likes != ''">
+            AND
+            <foreach collection="likes" item="item" open="(" separator="and" close=")">
+                ${item.column} like concat('%', #{item.value}, '%')
+            </foreach>
+        </if>
+        <if test="ltes != null and ltes != ''">
+            AND
+            <foreach collection="ltes" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ <= ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="gtes != null and gtes != ''">
+            AND
+            <foreach collection="gtes" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ >= ]]> #{item.value}
+            </foreach>
+        </if>
+        <if test="ranges != null and ranges != ''">
+            AND
+            <foreach collection="ranges" item="item" open="(" separator="and" close=")">
+                ${item.column} <![CDATA[ >= ]]> #{item.from} and ${item.column} <![CDATA[ < ]]> #{item.to}
+            </foreach>
+        </if>
+    </trim>
+</sql>
+
+
+<insert id="insert" useGeneratedKeys="true" keyProperty="id" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    insert into common_dao_demo_delete
+    (
+        <include refid="demoDeleteDO_sqlForInsert"/>
+    )
+    values
+    (
+        <include refid="demoDeleteDO_columnsForInsert"/>
+    )
+</insert>
+
+<update id="update" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    update common_dao_demo_delete
+    <include refid="demoDeleteDO_setterForUpdate" />
+    where id = #{id}
+</update>
+
+
+<update id="updateByQuery" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    update common_dao_demo_delete
+    <set>
+        gmt_modified = now(),
+        <if test="update.name != null">
+            name = #{update.name},
+        </if>
+    </set>
+    <include refid="demoDeleteDO_query_segment"/>
+</update>
+
+
+<insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    insert into common_dao_demo_delete
+    (
+        <include refid="demoDeleteDO_sqlForInsert"/>
+    )
+    values
+    (
+        <include refid="demoDeleteDO_columnsForInsert"/>
+    )
+    on duplicate key update
+    gmt_modified = now()
+    <if test="name != null">
+        ,name = #{name}
+    </if>
+</insert>
+
+<!-- Delete -->
+<delete id="delete">
+    delete from common_dao_demo_delete
+    <include refid="demoDeleteDO_query_segment"/>
+</delete>
+<delete id="deleteById">
+    delete from common_dao_demo_delete
+    where id = #{id}
+</delete>
+
+
+
+
+
+<!-- query class -->
+<sql id="demoDeleteDO_groupBy">
+    <if test="groupBys != null and groupBys != ''">
+        group by
+        <foreach collection="groupBys" item="item" open="" separator="," close="">
+            #{item}
+        </foreach>
+    </if>
+</sql>
+
+<sql id="demoDeleteDO_orderby">
+    <if test="orderBys != null and orderBys != ''">
+        order by
+        <foreach collection="orderBys" item="item" open="" separator="," close="">
+            ${item.column} ${item.direction}
+        </foreach>
+    </if>
+</sql>
+
+
+<select id="query" resultMap="demoDeleteDOResult" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    <include refid="demoDeleteDO_selector"/>
+    <include refid="demoDeleteDO_query_segment"/>
+    <include refid="demoDeleteDO_groupBy"/>
+    <include refid="demoDeleteDO_orderby"/>
+</select>
+
+<select id="query4Page" resultMap="demoDeleteDOResult" parameterType="com.sfebiz.common.dao.test.domain.DemoDeleteDO">
+    <include refid="demoDeleteDO_selector"/>
+    <include refid="demoDeleteDO_query_segment"/>
+    <include refid="demoDeleteDO_groupBy"/>
+    <include refid="demoDeleteDO_orderby"/>
+    limit ${startRowForMysql}, ${pageSize}
+</select>
+
+
+<select id="count" resultType="java.lang.Long">
+    SELECT COUNT(1) FROM common_dao_demo_delete
+    <include refid="demoDeleteDO_query_segment"/>
+</select>
+
+<select id="getById" resultMap="demoDeleteDOResult">
+    <include refid="demoDeleteDO_selector"/>
+    where id = #{id}
+</select>
+
+<select id="getByIdForUpdate" resultMap="demoDeleteDOResult">
+    <include refid="demoDeleteDO_selector"/>
+    where id = #{id}
+    for update
+</select>
+
+</mapper>
